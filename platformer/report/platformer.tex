@@ -1,0 +1,102 @@
+\documentclass[a4paper]{article}
+
+%\usepackage{a4wide,times}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{graphicx}
+%\usepackage{courier}
+%\usepackage{color}
+
+\begin{document}
+
+\lstset{
+	language = Java ,							% choose the language of the code
+	basicstyle = \ttfamily,						% the size of the fonts that are used for the code
+	numbers = left ,								% where to put the line -numbers
+	numberstyle = \footnotesize,					% the fontsize of the line -numbers
+	stepnumber = 1,								% the step between two line -numbers.
+	%backgroundcolor = \color{light -gray},		% choose the background color.
+	showspaces = false ,							% show spaces adding particular underscores
+	showstringspaces = false ,					% underline spaces within strings
+	showtabs = false ,							% show no tabs within strings
+	frame = single ,								% adds a frame around the code
+	tabsize = 3,									% sets default tabsize to 2 spaces
+	captionpos = t,								% sets the caption -position to top
+	breaklines = true ,							% sets automatic line breaking
+	breakatwhitespace = false ,					% automatic breaks only happen at whitespace
+	%title = \lstname ,							% show filename included with \lstinputlisting;
+	escapeinside = {\%*}{*)}, 					% if you want to add a comment within your code
+}
+
+
+\title{Object Oriented Programming\\
+Final project \\
+Platformer game
+}
+
+\date{\today}
+
+\author{Michiel de Jong \quad Jelle Visser\\
+s2550768 \quad s2238160
+}
+
+\maketitle
+
+\section{Problem description}
+The assignment was to make a 2d platformer game. This game should include health and a score, and doors that can be opened by other objects.
+%- Make a 2d platformer game
+%- Score & health
+%- Doors
+
+\section{Problem analysis}
+A game consists of many different aspects and most of them can be seen as individual problems.
+Therefore, the divide and conquer strategy is a good method to solve this.
+Some of the problems are to load the map, to check the collisions, to make the physics or to draw the view.
+
+%- divide and conquer
+%- loading map from an image file
+%- collisions
+%- physics
+%- drawing
+
+\section{Program design}
+
+For the game we used the Observer pattern.
+The Game class holds all data for the model, and the gamePanel class observes the game and does the drawing.\\
+The Game loads all the placable objects, and puts them in a CollisionManager.
+The collisionManager keeps track of which objects are in which area, so when an object has to check whether it collides with another object, it doesn't have to check all the objects in the map, but it can just check the objects in the neighbourhood.
+%All Placable objects change their data in the CollisionManager whenever they change position or size.
+The placable objects all observe the StepManager, which notifies its observers 30 times each second.
+When the StepManager notifies its observers, it also passes the InputManager, which can tell if whether a key is down or up.\\
+ 
+%% this might be in another order
+%- all objects in map extend placable
+%- objects with pyhsics extend movable
+%- gamewindow has a gamepanel
+%% with 'knows' I mean that this class has a variable that stores what it knows
+%- gamepanel knows and observes game
+%- collisionmanager has a set of all objects
+%- all objects in the map know collisionmanager
+%- whenever an object changes size or location, the collision data is updated
+%- all placabe objects observe the stepmanager, but only some also interact with it
+
+
+\section{Evaluation of the program}
+- program works free of errors
+
+
+% because we were quite free, i think it is pointless to make an 'extensions' section
+
+\section{Conclusions}
+
+- lack of time
+- other ways to implement collisions, but this probably easiest
+- actually wanted to make terraria-like RPG at first?
+
+\section{Appendix: program text}
+\subsection{graphedit}
+\lstinputlisting{../main.java}
+
+
+
+\end{document}

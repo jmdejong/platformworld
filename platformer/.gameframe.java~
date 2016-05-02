@@ -1,0 +1,8 @@
+import javax.swing.*;
+
+class GameFrame extends Jframe {
+	
+	public GameFrame(){
+		
+	}
+}

@@ -1,0 +1,168 @@
+import java.util.*;
+
+/*
+ * The game class is the main model that is observed by the view.
+ * Through the CollisionManager it can keep track of all the objects that are placed in the map.
+ * It is also used to load the map data. The method load reads all values from the MapLoader and makes
+ * the correct object in the correct place.
+ * The timer will call the step method of the game 30 times per second. This will call the step method
+ * of the stepManager, which notifies all objects in the game with the inputController as argument.
+ * Also, there is a main object, which is a Player.
+ * If the main object dies, the game is lost.
+ * The view can use this main object to keep it in the middle of the screen.
+ * 
+ */
+class Game extends Observable {
+	
+	private int width, height;
+	private InputController inputData;
+	private CollisionManager collisions;
+	private int centerX, centerY;
+	private Player mainObject;
+	private int time = 50000;
+	private boolean running, won = false, paused = false;
+	private Timer timer = new Timer();
+	private StepManager stepManager = new StepManager();
+	
+	private class StepManager extends Observable {
+		private InputController inputController;
+		
+		public void setInput(InputController input){
+			inputController = input;
+		}
+		
+		public void step(){
+			setChanged();
+			notifyObservers(inputController);
+		}
+	}
+	
+	
+	private TimerTask currentTask = new TimerTask(){
+		public void run(){
+			Game.this.step();
+		}
+	};
+	
+	
+	
+	public Set<Placable> getAllObjects(){
+		return collisions.get(0,0,width,height);
+	}
+	
+	public Set<Placable> getVisibleObjects(double x, double y, double width, double height){
+		return collisions.get(x,y,width,height);
+	}
+	
+	public void step(){
+		time--;
+		stepManager.step();
+		setChanged();
+		notifyObservers();
+		if (this.mainObject.isDead() || time<=0){
+			end(false);
+		}
+	}
+	
+	
+	public void setInputData(InputController inputData){
+		stepManager.setInput(inputData);
+		//this.inputData=inputData;
+	}
+	
+	public void setMainObject(Player obj){
+		mainObject = obj;
+	}
+	
+	public Player getMainObject(){
+		return mainObject;
+	}
+	
+	public int getWidth(){
+		return this.width;
+	}
+	
+	public int getHeight(){
+		return this.height;
+	}
+	
+	public int getTime(){
+		return time;
+	}
+	
+	public boolean isRunning(){
+		return running;
+	}
+	
+	public void end(boolean hasWon){
+		won = hasWon;
+		stop();
+	}
+	
+	public boolean finished(){
+		return !running && !paused;
+	}
+	
+	public boolean hasWon(){
+		return won;
+	}
+	
+	public int getScore(){
+		return won ? mainObject.getHealth()*100+time : 0;
+	}
+	
+	public void start(){
+		running = true;
+		timer.schedule(currentTask,0,33);
+	}
+	
+	public void stop(){
+		running = false;
+		setChanged();
+		notifyObservers(null);
+		currentTask.cancel();
+	}
+	
+	public void load(String fileName){
+		MapLoader loader = new MapLoader(fileName);
+		
+		width=loader.getWidth();
+		height=loader.getHeight();
+		
+		collisions = new CollisionManager(width,height);
+		
+		for (int x = 0; x<width; x++){
+			for (int y = 0; y<height; y++){
+				Placable obj = getObjectFromInt(loader.get(x,y));
+				if (obj != null){
+					obj.place(x,y);
+					obj.putInMap(collisions);
+					stepManager.addObserver(obj);
+				}
+			}
+		}
+	}
+	
+	public Placable getObjectFromInt(int number){
+		switch(number){
+			case 0xff00ff00:
+				return new Grass(this);
+			case 0xffaaaaaa:
+				return new Stop(this);
+			case 0xff0000ff:
+				return new Player(this);
+			case 0xffff0000:
+				return new Monster(this);
+			case 0xffcc6600:
+				return new Door(this);
+			case 0xffffff00:
+				return new KeyObject(this);
+			case 0xffff00ff:
+				return new Exit(this);
+			default:
+				return null;
+		}
+	}
+}
+
+

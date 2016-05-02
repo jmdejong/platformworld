@@ -1,0 +1,96 @@
+import java.util.ArrayList;
+import java.util.Observer;
+import java.util.Observable;
+
+
+// this class should keep an overview of which objects are in the game
+class Game extends Observable {
+	
+	private ArrayList<Placable> objects;
+	private int width, height;
+	private InputController inputData;
+	private CollisionManager collisions;
+	private int centerX, centerY;
+	private Placable mainObject;
+	
+	/*public boolean validLocation(int x, int y){
+		return (x>=0 && x<width && y>=0 && y<height);
+	}
+	
+	
+	public Block get(int x, int y){
+		if (!validLocation(x,y))
+			return null;
+		return values[x][y];
+		
+	}
+	
+	public void set(int x, int y, Block b){
+		if (!validLocation(x,y))
+			return;
+		values[x][y] = b;
+	}*/
+	
+	public ArrayList<Placable> getAllObjects(){
+		return objects;
+	}
+	
+	public void step(){
+		setChanged();
+		Object[] data = {inputData,collisions};
+		notifyObservers(data);
+	}
+	
+	
+	public void setInputData(InputController inputData){
+		this.inputData=inputData;
+	}
+	
+	public Placable getMainObject(){
+		return mainObject;
+	}
+	
+	public int getWidth(){
+		return this.width;
+	}
+	
+	public int getHeight(){
+		return this.height;
+	}
+	
+	public void load(String fileName){
+		MapLoader loader = new MapLoader(fileName);
+		
+		width=loader.getWidth();
+		height=loader.getHeight();
+		
+		collisions = new CollisionManager(width,height);
+		
+		//values = new Block[width][height];
+		objects = new ArrayList<Placable>();
+		
+		//System.out.println(values.size());
+		
+		for (int x = 0; x<width; x++){
+			for (int y = 0; y<height; y++){
+				if (loader.get(x,y)==0xff00ff00){ // we should make some map that maps colorvalues to an object/some objects
+					Placable b = new Grass(x,y);
+					//set(x, y, b);
+					objects.add(b);
+					collisions.set(b,x,y);
+				} else if (loader.get(x,y)==0xff101010){ // we should make some map that maps colorvalues to an object/some objects
+					Placable b = new Stop(x,y);
+					objects.add(b);
+					collisions.set(b,x,y);
+				} else if (loader.get(x,y)==0xff0000ff){
+					Controllable b = new Player(x,y);
+					mainObject = b;
+					objects.add(b);
+					addObserver(b);
+				}
+			}
+		}
+	}
+}
+
+

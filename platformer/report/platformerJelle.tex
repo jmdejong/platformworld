@@ -1,0 +1,170 @@
+\documentclass[a4paper,10pt,twoside]{article}
+
+%\usepackage{a4wide,times}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{graphicx}
+%\usepackage{courier}
+%\usepackage{color}
+
+\begin{document}
+
+\lstset{
+	language = Java ,							% choose the language of the code
+	basicstyle = \ttfamily,						% the size of the fonts that are used for the code
+	numbers = left ,								% where to put the line -numbers
+	numberstyle = \footnotesize,					% the fontsize of the line -numbers
+	stepnumber = 1,								% the step between two line -numbers.
+	%backgroundcolor = \color{light -gray},		% choose the background color.
+	showspaces = false ,							% show spaces adding particular underscores
+	showstringspaces = false ,					% underline spaces within strings
+	showtabs = false ,							% show no tabs within strings
+	frame = single ,								% adds a frame around the code
+	tabsize = 3,									% sets default tabsize to 2 spaces
+	captionpos = t,								% sets the caption -position to top
+	breaklines = true ,							% sets automatic line breaking
+	breakatwhitespace = false ,					% automatic breaks only happen at whitespace
+	%title = \lstname ,							% show filename included with \lstinputlisting;
+	escapeinside = {\%*}{*)}, 					% if you want to add a comment within your code
+}
+
+
+\title{Object Oriented Programming\\
+Programming report \\
+final project:\\
+2D Platformer
+}
+
+\date{\today}
+
+\author{Michiel de Jong \quad Jelle Visser\\
+s2550768 \quad s2238160 \\
+}
+
+\maketitle
+
+\section{Problem description}
+The goal of this project was to make a Terraria-like 2D-platformer. We wanted the player to move around in a 2D-world, inhabited by monsters, and be able to change this world in game (like in Terraria). In short, our goal was to implement the following features:
+\begin{itemize}
+\item A 2D side-scrolling map, loaded from an image file.
+\item The user being able to create their own map and use it
+\item A player character with health and an inventory
+\item Enemies which the player can kill and that can kill the player, and drop an item upon death
+\item Doors that can be opened and closed
+\item Awarding a score to the player.
+\end{itemize}
+
+%- Make a 2d platformer game
+%- Score and health
+%- Doors
+
+\section{Problem analysis}
+A game consists of many different aspects and most of them can be seen as individual problems.
+Therefore, the divide and conquer strategy is a good method to solve this.
+The problems we had to tackle are the following:
+\begin{itemize}
+\item \textbf{Being able to render a map from an image file}\\
+The user can pass a new map as an argument, made in a program like Gimp or Photoshop. If he doesn't, a default map is provided. The properties an object gets should depend on its color in the original image file. 
+\item \textbf{Implementing the user interface using a Model-View-Controller architecture}\\
+The model keeps track of what's going on in the game, which objects are in place, what the current state is etc. The view should observe this model, rendering the current state on the screen. Finally, the controller manages user input such as walking around and performing actions.
+\item \textbf{Drawing the game world and its components}\\
+The whole map shouldn't be displayed at once. Instead, we want it to scroll with the player. Therefore, the panel that displays the game should keep track of the player's position and move such that he stays in the middle of the screen. We also want to implement a timer, which redraws the game world on a set frequency.
+\item \textbf{Making a player character that can interact with the world}\\
+The player has 100 health points and gets damage from touching monsters. When this amount reaches 0, we want the game to end.
+\item \textbf{Implementing enemies and creating an AI}\\
+The AI shouldn't be too advanced, but it should be able to at least walk around and damage the player, turning around when colliding with an object. 
+\item \textbf{Handling collisions and physics}\\
+The player shouldn't be able to clip through ground and wall tiles, and the edges of the map. Each ground block in this game is a separate object, so calculating for each redrawing whether the player is touching any of these, or other, objects would be too taxing on resources. Instead, we want the game to only check this for nearby objects.
+
+We want to make a distinction between two types of in-game objects: objects that move and objects that are static. Moving objects can pass through each other, but not through static ones. They should therefore inherit from different classes. 
+
+When in-air, a gravity function should provide a downward acceleration. The player should not be able to jump while in the air, i.e. is not touching a block below him.
+\item \textbf{Maintaining a score system}\\
+The final score is calculated upon reaching the goal, and is a function of the player's health and the time it took to get to the goal. 
+
+\end{itemize}
+
+\section{Program design}
+For the game we used the Observer pattern. We will explain the design by explaining each component of the MVC-architecture.
+\subsection{Game model}
+The $Game$ class holds all data for the model. It loads all the placeable objects, and puts them in a $CollisionManager$.
+The $CollisionManager$ keeps track of which objects are in which area, so when an object has to check whether it collides with another object, it doesn't have to check all the objects in the map, but it can just check the objects in the neighbourhood.
+%All Placable objects change their data in the CollisionManager whenever they change position or size.
+The $Placable$ objects all observe the $StepManager$, which notifies its observers 30 times each second. Each and every object in the game world is a $Placable$. Static objects, like simple blocks, inherit directly from this class. The class $Movable$ extends $Placable$. Movable objects can move in the game world and experience physics, more specifically: gravity and friction.  The $Player$ and $Monster$ classes inherit from this class. Also note that the $Player$ class implements the interface $Actor$, meaning it can pick up items (currently only keys).
+
+When the $StepManager$ notifies its observers, it also passes the $InputManager$, which can tell if whether a key is down or up.
+
+\subsection{Game view}
+The class $GamePanel$ is an observer of the Game class. Every time the model changes, the $GamePanel$ repaints itself. The panel is attached to a game window. More specifically: it is attached to a card container. This is due to the card layout nature of our game. There are three different main panels: one for the game, one for the main menu and one for the how-to-play-section. Only one of these is displayed at a time. The card layout makes sure the right panel is displayed at the right time. 
+
+$Sprite$ is a class which takes care of how an object is drawn. Its constructor can either take an image file or a set of integers. In the last case, it creates a simple colored rectangle from the parameters.
+
+We have two special cases of classes inheriting from $Placable$: doors and stoppers. Stoppers are invisible blocks created around the map to prevent the player from leaving the game worlds. Doors can be opened and therefore have two different sprites: one for when its opened, and one for when it's closed.
+
+\subsection{Game controls}
+For handling input we make use of the class $InputController$. It contains two arrays, one to keep track of buttons that are currently down, and one to keep track which buttons have been pressed since the last time they were.
+
+The menu buttons use simple action listeners to determine the correct action. The ``Start game'' button makes the card layout switch to the $GamePanel$, the ``How to play'' switches it to the $Description panel$ and the ``Quit game'' button, of course, closes the game. 
+
+\section{Evaluation of the program}
+In the end we made a completely functioning game. It is, however, different from our original plan of making a Terraria-esque game. This game behaves more like a classical platformer. While we deviated from our original plan, this game meets most of the minimum criteria of the assignment. The only things missing are the ability to save highscores and health-increasing items. We did not implement the ability to influence the map in-game nor did we implement loot and gear. Instead, the player now has to reach the goal position as fast as possible while dodging enemies and finding keys to open doors.
+
+During the very final stages of development, a quite annoying bug came up: after pressing the ``Start game'' button, the game accepts no input. This is, however, solved by opening another window and then opening the game window again. The origin of this bug is unknown, and could not be solved in time.
+% because we were quite free, i think it is pointless to make an 'extensions' section
+
+\section{Conclusions}
+The reason we did not meet our planned goals and deviated from the original is due to underestimating the time needed for the project. Despite this, we encountered relatively little problems. During the process we learned a lot about programming games from scratch.
+
+In the end, we delivered a working game with a source code that makes good use of OOP-principles. 
+
+\section{Appendix: source code}
+\subsection{Actor}
+\lstinputlisting{../actor.java}
+\subsection{Block}
+\lstinputlisting{../block.java}
+\subsection{CollisionManager}
+\lstinputlisting{../collisionmanager.java}
+\subsection{Controller}
+\lstinputlisting{../controller.java}
+\subsection{Description}
+\lstinputlisting{../description.java}
+\subsection{Door}
+\lstinputlisting{../door.java}
+\subsection{Exit}
+\lstinputlisting{../exit.java}
+\subsection{Game}
+\lstinputlisting{../game.java}
+\subsection{GamePanel}
+\lstinputlisting{../gamepanel.java}
+\subsection{GameWindow}
+\lstinputlisting{../gamewindow.java}
+\subsection{Grass}
+\lstinputlisting{../grass.java}
+\subsection{Inventory}
+\lstinputlisting{../inventory.java}
+\subsection{Item}
+\lstinputlisting{../item.java}
+\subsection{Key}
+\lstinputlisting{../key.java}
+\subsection{Main / Parcours}
+\lstinputlisting{../main.java}
+\subsection{Maploader}
+\lstinputlisting{../maploader.java}
+\subsection{Menupanel}
+\lstinputlisting{../menupanel.java}
+\subsection{Monster}
+\lstinputlisting{../monster.java}
+\subsection{Movable}
+\lstinputlisting{../movable.java}
+\subsection{Placable}
+\lstinputlisting{../placable.java}
+\subsection{Player}
+\lstinputlisting{../player.java}
+\subsection{Sprite}
+\lstinputlisting{../sprite.java}
+\subsection{Stopper}
+\lstinputlisting{../stopper.java}
+
+
+
+\end{document}

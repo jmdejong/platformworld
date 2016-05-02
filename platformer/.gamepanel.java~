@@ -1,0 +1,76 @@
+import javax.swing.*;
+import java.awt.*;
+import java.util.Collection;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.Observer;
+import java.util.Observable;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
+
+/*
+ * The GamePanel does all the drawing of the game.
+ */
+
+class GamePanel extends JPanel implements Observer {
+	private Game game;
+	private double scale = 32;
+	
+	public GamePanel(Game game){
+		this.game=game;
+		repaint();
+		game.addObserver(this);
+		
+	}
+	
+	public void paintBorder(Graphics g){
+		g.setFont(new Font(Font.DIALOG,Font.PLAIN,18));
+		g.drawString("Health: "+game.getMainObject().getHealth()+"  Time left: "+game.getTime()*33.0/1000,getWidth()/2-100,30);
+		if (!game.isRunning()){
+			g.setFont(new Font(Font.DIALOG,Font.BOLD,32));
+			if (game.paused()){
+				g.drawString("Game paused",getWidth()/2-100,getHeight()/2);
+			} if (game.hasWon()){
+				g.drawString("You won, Score: "+(game.getScore()),getWidth()/2-100,getHeight()/2);
+			} else {
+				g.drawString("You lost",getWidth()/2-100,getHeight()/2);
+			}
+		}
+	}
+	
+	public void paintComponent(Graphics gr){
+		Graphics g = gr.create();
+		
+		g.clearRect(0,0,getWidth(),getHeight());
+		
+		double x = Math.min(Math.max(game.getMainObject().getX()*scale-getWidth()/2,0),game.getWidth()*scale-getWidth());
+		double y = Math.min(Math.max(game.getMainObject().getY()*scale-getHeight()/2,0),game.getHeight()*scale-getHeight());
+		g.translate(-(int)x,-(int)y);
+		Collection<Placable> gameObjects=game.getVisibleObjects(x/scale,y/scale,getWidth()/scale,getHeight()/scale);
+		
+		for (Placable object : gameObjects){
+			Sprite sprite = object.getSprite();
+			if (sprite == null)
+				continue;
+			//sprite.draw(g,object.getX(),object.getY(),scale);
+			drawSprite(sprite, g, object.getX(),object.getY());
+		}
+// 		g.setColor(Color.BLUE);
+// 		g.fillRect(800,200,150,250);
+	}
+	
+	public void drawSprite(Sprite sprite, Graphics g, double x, double y){
+		if (!sprite.image()){
+			g.setColor(sprite.getColor());
+			g.fillRect((int)((x+sprite.getXmin())*scale),(int)((y+sprite.getYmin())*scale),(int)(sprite.getWidth()*scale),(int)(sprite.getHeight()*scale));
+		} else {
+			g.setColor(Color.WHITE);
+			g.drawImage(sprite.getImage(),(int)((x+sprite.getXmin())*scale),(int)((y+sprite.getYmin())*scale),(int)(sprite.getWidth()*scale),(int)(sprite.getHeight()*scale),null);
+		}
+	}
+	
+	public void update(Observable caller, Object data){
+		repaint();
+	}
+	
+}

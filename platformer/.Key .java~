@@ -1,0 +1,29 @@
+
+class GameKey extends Placable { // the name Key was already taken for a class in the java API
+	
+	Sprite sprite = new Sprite(0xffff00,0.1,0.2,0.8,0.8);
+	
+	public GameKey(Game game){
+		setSize(1,1);
+	
+	public boolean interactable(){
+		return true;
+	}
+	
+	public void interact(Actor player){
+		boolean taken = player.take(new Item(){
+			public String getType(){
+				return "key";
+			}
+		});
+		if (taken){
+			removeFromMap();
+		}
+	}
+	
+	public boolean isSolid(){
+		return false;
+	}
+	
+	pu
+}

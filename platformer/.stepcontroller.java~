@@ -1,0 +1,17 @@
+import java.util.Observer;
+import java.util.Observable;
+
+class StepController extends Observable {
+	
+	inputController inputData;
+	
+	public void setInputData(InputController inputData){
+		this.inputData=inputData;
+	}
+	
+	public void step(){
+		setChanged();
+		notifyObservers(inputData);
+	}
+	
+}

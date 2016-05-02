@@ -1,0 +1,7 @@
+
+
+interface Takable {
+	
+	public Item getItem();
+	public void remove();
+}

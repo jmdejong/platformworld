@@ -1,0 +1,11 @@
+
+class Stop extends Block{
+	
+	public Stop(Game game){
+		setSize(1,1);
+	}
+	
+	public Sprite getSprite(){
+		return null;
+	}
+}
